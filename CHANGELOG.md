@@ -1,5 +1,25 @@
 # Version History
 
+## Release v2.5.7
+* Point 3.14-dev to `3.14` branch by @edgarrmondragon in https://github.com/pyenv/pyenv/pull/3246
+
+## Release v2.5.6
+* Add GraalPy 24.2.1 by @msimacek in https://github.com/pyenv/pyenv/pull/3238
+* Fix get-pip URLs for 3.7, 3.8 and Pyston by @dmrlawson in https://github.com/pyenv/pyenv/pull/3242
+* [CI] Cache `uname` and `sw_vers` output in Python-Build for easier mocking in tests by @native-api in https://github.com/pyenv/pyenv/pull/3244
+* Add CPython 3.14.0b1 and 3.15-dev by @edgarrmondragon in https://github.com/pyenv/pyenv/pull/3245
+
+## Release v2.5.5
+* Add graalpy 24.2 by @msimacek in https://github.com/pyenv/pyenv/pull/3215
+* Switch 3.9+ to OpenSSL 3 by @native-api in https://github.com/pyenv/pyenv/pull/3223
+* Add miniforge3-24.11.3-1, miniforge3-24.11.3-2, miniforge3-25.1.1 by @native-api in https://github.com/pyenv/pyenv/pull/3224
+* Add CPython 3.9.22, 3.10.17, 3.11.12, 3.12.10, 3.13.3, 3.14.0a7 by @native-api in https://github.com/pyenv/pyenv/pull/3233
+
+## Release v2.5.4
+* Add anaconda3-2025.1.1-2 by @binbjz in https://github.com/pyenv/pyenv/pull/3198
+* Add PyPy v7.3.19 by @jsirois in https://github.com/pyenv/pyenv/pull/3205
+* Add CPython 3.14.0a6 by @nedbat in https://github.com/pyenv/pyenv/pull/3213
+
 ## Release v2.5.3
 * Add PyPy v7.3.18 by @dand-oss in https://github.com/pyenv/pyenv/pull/3184
 * Add Miniconda3 25.1.1-0 by @binbjz in https://github.com/pyenv/pyenv/pull/3190
