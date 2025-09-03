@@ -14,7 +14,7 @@
 #   -g/--debug       Build a debug version
 #
 
-PYTHON_BUILD_VERSION="20180424"
+PYTHON_BUILD_VERSION="2.6.7"
 
 OLDIFS="$IFS"
 
@@ -863,6 +863,8 @@ build_package_standard_build() {
       use_homebrew_readline || true
       use_homebrew_ncurses || true
       if is_mac -ge 1014; then
+        # While XCode SDK is "always available",
+        # still need a fallback in case we are using an alternate compiler
         use_xcode_sdk_zlib || use_homebrew_zlib || true
       else
         use_homebrew_zlib || true
@@ -873,7 +875,9 @@ build_package_standard_build() {
       use_macports_readline || true
       use_macports_ncurses || true
       if is_mac -ge 1014; then
-        use_xcode_sdk_zlib || use_macports_zlib || true
+        # While XCode SDK is "always available",
+        # still need a fallback in case we are using an alternate compiler
+        use_xcode_sdk_zlib || use_homebrew_zlib || true
       else
         use_macports_zlib || true
       fi
@@ -883,6 +887,9 @@ build_package_standard_build() {
     fi
     if can_use_macports; then
       use_macports || true
+    fi
+    if is_mac -ge 1014 && ! can_use_homebrew && ! can_use_macports; then
+      use_xcode_sdk_zlib || true
     fi
 
     use_freebsd_pkg || true
@@ -1507,8 +1514,9 @@ use_macports() {
   local port_location="$(command -v port)"
   if [ -n "$port_location" ]; then
     local prefix="${port_location%/bin/port}"
-    export CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-I${prefix}/include"
-    append_ldflags_libs "-L${prefix}/lib -Wl,-rpath,${prefix}/lib"
+    export CPPFLAGS="-I${prefix}/include${CPPFLAGS:+ $CPPFLAGS}"
+    prepend_ldflags_libs "-L${prefix}/lib -Wl,-rpath,${prefix}/lib"
+    export PKG_CONFIG_PATH="$prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     lock_in macports
   fi
 }
@@ -1538,15 +1546,9 @@ use_homebrew_yaml() {
 
 use_macports_yaml() {
   can_use_macports || return 1
-  local prefix="$(port -q location libyaml 2>/dev/null || true)"
-  if [ -n "$prefix" ]; then
-    local libdir="$prefix/opt/local"
-    if [ -d "$libdir" ]; then
-      echo "python-build: use libyaml from MacPorts"
-      export CPPFLAGS="-I$libdir/include${CPPFLAGS:+ $CPPFLAGS}"
-      export LDFLAGS="-L$libdir/lib${LDFLAGS:+ ${LDFLAGS% }}"
-      lock_in macports
-    fi
+  if [[ $(port -q installed libyaml | awk '{print $3}') == "(active)" ]]; then
+    echo "python-build: use libyaml from MacPorts"
+    lock_in macports
   else
     return 1
   fi
@@ -1585,14 +1587,17 @@ use_freebsd_pkg() {
 has_broken_mac_readline() {
   # Mac OS X 10.4 has broken readline.
   # https://github.com/pyenv/pyenv/issues/23
-  if is_mac && ! configured_with_package_dir "python" "readline/rlconf.h"; then
-    if can_use_homebrew; then
-      use_homebrew_readline && return 1
-    fi
-    if can_use_macports; then
-      use_macports_readline && return 1
-    fi
+  if ! is_mac || configured_with_package_dir "python" "readline/rlconf.h"; then
+    # Not applicable.
+    return 1
   fi
+  if can_use_homebrew; then
+    use_homebrew_readline && return 1
+  fi
+  if can_use_macports; then
+    use_macports_readline && return 1
+  fi
+  return 0
 }
 
 use_homebrew_readline() {
@@ -1613,15 +1618,9 @@ use_homebrew_readline() {
 use_macports_readline() {
   can_use_macports || return 1
   if ! configured_with_package_dir "python" "readline/rlconf.h"; then
-    local prefix="$(port -q location readline 2>/dev/null || true)"
-    if [ -n "$prefix" ]; then
-      local libdir="$prefix/opt/local"
-      if [ -d "$libdir" ]; then
-        echo "python-build: use readline from MacPorts"
-        export CPPFLAGS="-I$libdir/include${CPPFLAGS:+ $CPPFLAGS}"
-        export LDFLAGS="-L$libdir/lib${LDFLAGS:+ $LDFLAGS}"
-        lock_in macports
-      fi
+    if [[ $(port -q installed readline | awk '{print $3}') == "(active)" ]]; then
+      echo "python-build: use readline from MacPorts"
+      lock_in macports
     else
       return 1
     fi
@@ -1643,15 +1642,9 @@ use_homebrew_ncurses() {
 
 use_macports_ncurses() {
   can_use_macports || return 1
-  local prefix="$(port -q location ncurses 2>/dev/null || true)"
-  if [[ -n "$prefix" ]]; then
-    local libdir="$prefix/opt/local"
-    if [ -d "$libdir" ]; then
-      echo "python-build: use ncurses from MacPorts"
-      export CPPFLAGS="-I$libdir/include${CPPFLAGS:+ $CPPFLAGS}"
-      export LDFLAGS="-L$libdir/lib${LDFLAGS:+ $LDFLAGS}"
-      lock_in macports
-    fi
+  if [[ $(port -q installed ncurses | awk '{print $3}') == "(active)" ]]; then
+    echo "python-build: use ncurses from MacPorts"
+    lock_in macports
   else
     return 1
   fi
@@ -1694,6 +1687,7 @@ has_broken_mac_openssl() {
       use_macports_openssl && return 1
     fi
   fi
+  return 0
 }
 
 use_homebrew_openssl() {
@@ -1722,22 +1716,16 @@ use_homebrew_openssl() {
 use_macports_openssl() {
   can_use_macports || return 1
   command -v port >/dev/null || return 1
+  local port_location="$(command -v port)"
+  local prefix="${port_location%/bin/port}"
   for openssl in ${PYTHON_BUILD_HOMEBREW_OPENSSL_FORMULA:-openssl}; do
-    local ssldir="$(port -q location "${openssl}" 2>/dev/null || true)"
-    if [ -n "$ssldir" ]; then
-      ssldir="${ssldir}/opt/local"
-      if [ -d "$ssldir" ]; then
-        echo "python-build: use ${openssl} from MacPorts"
-        if [[ -n "${PYTHON_BUILD_CONFIGURE_WITH_OPENSSL:-}" ]]; then
-          # configure script of newer CPython versions support `--with-openssl`
-          # https://bugs.python.org/issue21541
-          package_option python configure --with-openssl="${ssldir}"
-        else
-          export CPPFLAGS="-I$ssldir/include ${CPPFLAGS:+ $CPPFLAGS}"
-          export LDFLAGS="-L$ssldir/lib${LDFLAGS:+ $LDFLAGS}"
-        fi
+    if [[ $(port -q installed ${openssl} | awk '{print $3}') == "(active)" ]]; then
+      echo "python-build: use ${openssl} from MacPorts"
+      if [[ -n "${PYTHON_BUILD_CONFIGURE_WITH_OPENSSL:-}" ]]; then
+        # configure script of newer CPython versions support `--with-openssl`
+        # https://bugs.python.org/issue21541
+        package_option python configure --with-openssl="${prefix}"
       fi
-      export PKG_CONFIG_PATH="$ssldir/lib/pkgconfig/:${PKG_CONFIG_PATH}"
       lock_in macports
       return 0
     fi
@@ -1838,38 +1826,40 @@ use_homebrew_zlib() {
   local brew_zlib="$(brew --prefix zlib 2>/dev/null || true)"
   if [ -d "$brew_zlib" ]; then
     echo "python-build: use zlib from homebrew"
-    export CFLAGS="-I${brew_zlib} ${CFLAGS}"
+    export CPPFLAGS="-I${brew_zlib}/include${CPPFLAGS:+ ${CPPFLAGS}}"
+    export LDFLAGS="-L${brew_zlib}/lib${LDFLAGS:+ ${LDFLAGS}}"
     lock_in homebrew
+    rc=0
   fi
 }
 
 use_xcode_sdk_zlib() {
   # If a custom compiler is used, including XCode SDK will likely break it
   [[ "${CC:-clang}" != "clang" || "$(command -v clang 2>/dev/null || true)" != "/usr/bin/clang" ]] && return 1
-  local xc_sdk_path="$(xcrun --show-sdk-path 2>/dev/null || true)"
-  if [ -d "$xc_sdk_path" ]; then
-    echo "python-build: use zlib from xcode sdk"
-    # Even though SDK's compiler uses the SDK dirs implicitly,
-    # CPython's setup.py has to have nonstandard paths specified explicitly
-    # to search for zlib.h in them
-    export CPPFLAGS="${CPPFLAGS:+$CPPFLAGS }-I${xc_sdk_path}/usr/include"
-    if is_mac -ge 1100; then
-      export LDFLAGS="${LDFLAGS:+$LDFLAGS }-L${xc_sdk_path}/usr/lib"
-    fi
-  fi
+
+  local sdkroot="$(xcrun --sdk macosx --show-sdk-path 2>/dev/null || true)"
+  [[ -z ${sdkroot} || ! -d ${sdkroot} ]] && return 1
+
+  # Since Xcode 16 / macOS SDK 15, Apple tightened how the linker uses SDK content:
+  # forcing -L "$SDK/usr/lib" now leads to odd link failures.
+  echo "python-build: use zlib from xcode sdk"
+  # Since 3.9.1 (bpo-41116), CPython's setup.py logic can search default SDK's sysroot itself
+  # so we don't need to do anything
+  # Since 2.7.12 and 3.5.2 (Issue #25136), distutils knows to look for Apple XCode 7+ stub libraries (.tbd)
+  # when searching in the SDK
+  # Since 2.7.4 and 3.2.1 (issue #7724), setup.py and distutils can search in the MacOS SDK when
+  # it's explicitly specified with -isysroot
+  
+  #distutils.unixcompiler and setup.py specifically search CFLAGS for "-isysroot"
+  export CFLAGS="${CFLAGS:+$CFLAGS }-isysroot ${sdkroot}"
+  return 0
 }
 
 use_macports_zlib() {
   can_use_macports || return 1
-  local prefix="$(port -q location zlib 2>/dev/null || true)"
-  if [[ -n "$prefix" ]]; then
-      local libdir="$prefix/opt/local"
-      if [[ -d "$libdir" ]]; then
-        echo "python-build: use zlib from MacPorts"
-        export CPPFLAGS="-I$prefix/include ${CPPFLAGS}"
-        export LDFLAGS="-L$prefix/lib ${LDFLAGS}"
-        lock_in macports
-      fi
+  if [[ $(port -q installed zlib | awk '{print $3}') == "(active)" ]]; then
+    echo "python-build: use zlib from MacPorts"
+    lock_in macports
   else
     return 1
   fi

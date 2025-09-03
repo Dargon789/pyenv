@@ -1,5 +1,47 @@
 # Version History
 
+## Release v2.6.7
+* Skip Zlib from XCode for XCode 16+ by @native-api in https://github.com/pyenv/pyenv/pull/3298
+* Don't fail the build if `xcodebuild` fails by @native-api in https://github.com/pyenv/pyenv/pull/3302
+* Add CPython 3.14.0rc2 and 3.13.7 by @nedbat in https://github.com/pyenv/pyenv/pull/3303
+
+## Release v2.6.6
+* Add anaconda3-2025.06-0, anaconda3-2025.06-1, miniconda3-25.3.1-1, miniconda3-25.5.1-0, miniconda3-25.5.1-1 by @native-api in https://github.com/pyenv/pyenv/pull/3295
+* Add CPython 3.13.6 by @cesarcoatl in https://github.com/pyenv/pyenv/pull/3297
+
+## Release v2.6.5
+* Bump OpenSSL to 3.5.1 in the latest releases and branch tips in CPython 3.12 - 3.15 by @edgarrmondragon in https://github.com/pyenv/pyenv/pull/3287
+* Add Jython 2.7.4 by @cesarcoatl in https://github.com/pyenv/pyenv/pull/3290
+* Add CPython 3.14.0rc1 by @nedbat in https://github.com/pyenv/pyenv/pull/3293
+* Add GraalPy 24.2.2 by @msimacek in https://github.com/pyenv/pyenv/pull/3291
+
+## Release v2.6.4
+* Backport bpo_36106 to 3.5.10 and 3.6.15 by @native-api in https://github.com/pyenv/pyenv/pull/3280
+* (regression) Use Zlib from XCode SDK in MacOS without Homebrew or Macports by @native-api in https://github.com/pyenv/pyenv/pull/3282
+* Add PyPy v7.3.20 by @jsirois in https://github.com/pyenv/pyenv/pull/3284
+* Add CPython 3.14.0b4 by @edgarrmondragon in https://github.com/pyenv/pyenv/pull/3285
+
+## Release v2.6.3
+* README: Re-promote "Python versions with extended support" to a section by @native-api in https://github.com/pyenv/pyenv/pull/3276
+* Support linking to MacPorts ports installed from binary archives by @0916dhkim in https://github.com/pyenv/pyenv/pull/3272
+* Add CPython 3.14.0b3 by @nedbat in https://github.com/pyenv/pyenv/pull/3278
+
+## Release v2.6.2
+* Add CPython 3.13.5 by @nedbat in https://github.com/pyenv/pyenv/pull/3269
+
+## Release v2.6.1
+* Add CPython 3.9.23, 3.10.18, 3.11.13, 3.12.11, 3.13.4 by @nedbat in https://github.com/pyenv/pyenv/pull/3266
+
+## Release v2.6.0
+* python-build: Support patch paths with spaces/special characters by @native-api in https://github.com/pyenv/pyenv/pull/3251
+* Add CODEOWNERS file by @native-api in https://github.com/pyenv/pyenv/pull/3247
+* README: make fish PATH add conditional on the directory existing by @BooleanCat in https://github.com/pyenv/pyenv/pull/2786
+* Add --bare option to `pyenv version` by @jjwatt in https://github.com/pyenv/pyenv/pull/2783
+* README: Add shell setup instructions for nushell by @jordanst3wart in https://github.com/pyenv/pyenv/pull/2916
+* Add MacPorts support for python-build by @studnitskiy in https://github.com/pyenv/pyenv/pull/3186
+* python-build: fix `has_broken_mac_readline` when Readline is explicitly configured by @fofoni in https://github.com/pyenv/pyenv/pull/3254
+* Add CPython 3.14.0b2 by @nedbat in https://github.com/pyenv/pyenv/pull/3259
+
 ## Release v2.5.7
 * Point 3.14-dev to `3.14` branch by @edgarrmondragon in https://github.com/pyenv/pyenv/pull/3246
 
