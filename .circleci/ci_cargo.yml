@@ -1,0 +1,63 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/configuration-reference
+
+version: 2.1
+executors:
+  my-custom-executor:
+    docker:
+      - image: cimg/base:stable
+        auth:
+        # ensure you have first added these secrets
+        # visit app.circleci.com/settings/project/github/Dargon789/foundry/environment-variables
+        username: $DOCKER_HUB_USER
+        password: $DOCKER_HUB_PASSWORD
+        
+jobs:
+  web3-defi-game-project:
+
+    executor: my-custom-executor
+    steps:
+      - checkout
+      - run: |
+          # echo Hello, World!
+
+workflows:
+  my-custom-workflow:
+    jobs:
+      - web3-defi-game-project
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/rust:1.89.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-cargo-{{ checksum "Cargo.lock" }}
+            - v1-cargo-
+      - run:
+          name: "Check formatting"
+          command: cargo fmt -- --check
+      - run:
+          name: "Run tests"
+          command: cargo test
+      - save_cache:
+          key: v1-cargo-{{ checksum "Cargo.lock" }}
+          paths:
+            - "~/.cargo/bin"
+            - "~/.cargo/registry/index"
+            - "~/.cargo/registry/cache"
+            - "~/.cargo/git/db"
+            - "target"
+      - run:
+          name: "Check formatting"
+          command: cargo fmt -- --check
+      - run:
+          name: "Run tests"
+          command: cargo test
+
+workflows:
+  ci:
+    jobs:
+      - build-and-test
